@@ -19,9 +19,23 @@ Marionette.View = Backbone.View.extend({
     // at some point however this may be removed
     this.options = _.extend({}, _.result(this, 'options'), options);
 
+    // Prevent handling of `modelEvents` and `collectionEvents` in
+    // `setElement` -> `delegateEvents` in Backbone constructor; it
+    // needs to happen after initialize is called
+    this._constructingMarionetteView = true;
+
     this._behaviors = Marionette.Behaviors(this);
 
     Backbone.View.call(this, this.options);
+
+    // Re-enable handling of `modelEvents` and `collectionEvents`
+    // in `setElement` -> `delegateEvents` not to break behaviour of
+    // `delegateEvents` and `undelegateEvents` extended by Marionette
+    delete this._constructingMarionetteView;
+
+    // Handle `modelEvents` and `collectionEvents` configuration
+    // now, when initialize has been called
+    this._delegateModelAndCollectionEvents();
 
     Marionette.MonitorDOMRefresh(this);
   },
@@ -87,13 +101,13 @@ Marionette.View = Backbone.View.extend({
   // the `triggers`, `modelEvents`, and `collectionEvents` configuration
   delegateEvents: function(events) {
     this._delegateDOMEvents(events);
-    this.bindEntityEvents(this.model, this.getOption('modelEvents'));
-    this.bindEntityEvents(this.collection, this.getOption('collectionEvents'));
 
-    _.each(this._behaviors, function(behavior) {
-      behavior.bindEntityEvents(this.model, behavior.getOption('modelEvents'));
-      behavior.bindEntityEvents(this.collection, behavior.getOption('collectionEvents'));
-    }, this);
+    // Do not handle `modelEvents` and `collectionEvents` in the
+    // Backbone constructor inside `setElement`; it needs to happen
+    // after `initialize` is called
+    if (!this._constructingMarionetteView) {
+      this._delegateModelAndCollectionEvents();
+    }
 
     return this;
   },
@@ -119,11 +133,34 @@ Marionette.View = Backbone.View.extend({
     Backbone.View.prototype.delegateEvents.call(this, combinedEvents);
   },
 
+  // Bind only `modelEvents` and `collectionEvents` from the configuration
+  _delegateModelAndCollectionEvents: function() {
+    this.bindEntityEvents(this.model, this.getOption('modelEvents'));
+    this.bindEntityEvents(this.collection, this.getOption('collectionEvents'));
+
+    _.each(this._behaviors, function(behavior) {
+      behavior.bindEntityEvents(this.model, behavior.getOption('modelEvents'));
+      behavior.bindEntityEvents(this.collection, behavior.getOption('collectionEvents'));
+    }, this);
+  },
+
   // Overriding Backbone.View's undelegateEvents to handle unbinding
   // the `triggers`, `modelEvents`, and `collectionEvents` config
   undelegateEvents: function() {
     Backbone.View.prototype.undelegateEvents.apply(this, arguments);
 
+    // Do not handle `modelEvents` and `collectionEvents` in the
+    // Backbone constructor inside `setElement`; it needs to happen
+    // after `initialize` is called
+    if (!this._constructingMarionetteView) {
+      this._undelegateModelAndCollectionEvents();
+    }
+
+    return this;
+  },
+
+  // Unbind `modelEvents` and `collectionEvents` from the configuration
+  _undelegateModelAndCollectionEvents: function() {
     this.unbindEntityEvents(this.model, this.getOption('modelEvents'));
     this.unbindEntityEvents(this.collection, this.getOption('collectionEvents'));
 
@@ -131,8 +168,6 @@ Marionette.View = Backbone.View.extend({
       behavior.unbindEntityEvents(this.model, behavior.getOption('modelEvents'));
       behavior.unbindEntityEvents(this.collection, behavior.getOption('collectionEvents'));
     }, this);
-
-    return this;
   },
 
   // Internal helper method to verify whether the view hasn't been destroyed

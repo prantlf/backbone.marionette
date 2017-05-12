@@ -218,4 +218,43 @@ describe('view entity events', function() {
       expect(this.barStub).to.have.been.calledOnce;
     });
   });
+
+  describe('when a model or collection are set first in initialize', function() {
+    beforeEach(function() {
+      var model = this.model;
+      var collection = this.collection;
+
+      this.fooOneStub = this.sinon.stub();
+      this.fooTwoStub = this.sinon.stub();
+      this.barOneStub = this.sinon.stub();
+      this.barTwoStub = this.sinon.stub();
+
+      this.View = Marionette.View.extend({
+        modelEvents      : {'foo': 'fooOne fooTwo'},
+        collectionEvents : {'bar': 'barOne barTwo'},
+        initialize: function() {
+          this.model = model;
+          this.collection = collection;
+        },
+        fooOne: this.fooOneStub,
+        fooTwo: this.fooTwoStub,
+        barOne: this.barOneStub,
+        barTwo: this.barTwoStub
+      });
+
+      this.view = new this.View();
+    });
+
+    it('should still wire up model events', function() {
+      this.model.trigger('foo');
+      expect(this.fooOneStub).to.have.been.called.once;
+      expect(this.fooTwoStub).to.have.been.called.once;
+    });
+
+    it('should still wire up collection events', function() {
+      this.collection.trigger('bar');
+      expect(this.barOneStub).to.have.been.called.once;
+      expect(this.barTwoStub).to.have.been.called.once;
+    });
+  });
 });
