@@ -1162,4 +1162,57 @@ describe('region', function() {
       });
     });
   });
+
+  describe('when using a Marionette 3 view', function() {
+    beforeEach(function() {
+      var View = Backbone.View.extend({
+        className: 'view',
+        supportsRenderLifecycle: true,
+        supportsDestroyLifecycle: true,
+        _isDestroyed: false,
+        isDestroyed: function() {
+          return !!this._isDestroyed;
+        },
+        destroy: function() {
+          if (this._isDestroyed) {
+            return this;
+          }
+          this.trigger('before:destroy', this);
+          this.$el.remove();
+          this._isDestroyed = true;
+          this.trigger('destroy', this);
+          this.stopListening();
+          return this;
+        },
+        render: function() {
+          if (this._isDestroyed) {
+            throw new Error('View (cid: "' + this.cid + '") has already been destroyed and cannot be used.');
+          }
+          return this;
+        }
+      });
+      this.region = new Marionette.Region({
+        el: $('<div></div>')
+      });
+      this.view = new View();
+    });
+
+    it('the view can be shown', function() {
+      this.region.show(this.view);
+    });
+
+    it('the view will be destroyed, whe nthe region is emptied', function() {
+      this.region.show(this.view);
+      this.region.empty();
+      expect(this.view.isDestroyed()).to.equal(true);
+    });
+
+    it('the view cannot be shown again, after being destroyed', function() {
+      this.region.show(this.view);
+      this.region.empty();
+      expect(function() {
+        this.region.show(this.view);
+      }.bind(this)).to.throw();
+    });
+  });
 });
