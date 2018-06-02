@@ -41,6 +41,11 @@ Marionette.Behavior = Marionette.Object.extend({
   },
 
   proxyViewProperties: function(view) {
+    // Support using Marionette 2 behaviors in Marionette 3 views
+    if (!view) {
+      view = this.view;
+    }
+
     this.$el = view.$el;
     this.el = view.el;
   }

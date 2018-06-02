@@ -807,4 +807,24 @@ describe('Behaviors', function() {
       expect(this.behavior.destroy).to.have.returned(this.behavior);
     });
   });
+
+  describe('when used in a Marionette 3 view', function() {
+    beforeEach(function() {
+      this.behaviors = {
+        foo: this.sinon.spy(Marionette, 'Behavior')
+      };
+      Marionette.Behaviors.behaviorsLookup = this.behaviors;
+    });
+
+    beforeEach(function() {
+      var View = Marionette.ItemView.extend({
+        behaviors: {foo: {}},
+      });
+      this.view = new View();
+    });
+
+    it('proxying the view element to the behavior works', function() {
+      _.invoke(this.view._behaviors, 'proxyViewProperties');
+    });
+  });
 });
