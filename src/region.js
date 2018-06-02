@@ -73,9 +73,9 @@ Marionette.Region = Marionette.Object.extend({
     if (_shouldDestroyView) {
       this.empty();
 
-    // A `destroy` event is attached to the clean up manually removed views.
-    // We need to detach this event when a new view is going to be shown as it
-    // is no longer relevant.
+      // A `destroy` event is attached to the clean up manually removed views.
+      // We need to detach this event when a new view is going to be shown as it
+      // is no longer relevant.
     } else if (isChangingView && _shouldShowView) {
       this.currentView.off('destroy', this.empty, this);
     }

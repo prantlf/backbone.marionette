@@ -12,8 +12,9 @@ Marionette.Behaviors = (function(Marionette, _) {
   // Borrow event splitter from Backbone
   var delegateEventSplitter = /^(\S+)\s*(.*)$/;
 
-  function Behaviors(view, behaviors) {
+  var methods;
 
+  function Behaviors(view, behaviors) {
     if (!_.isObject(view.behaviors)) {
       return {};
     }
@@ -29,7 +30,7 @@ Marionette.Behaviors = (function(Marionette, _) {
     return behaviors;
   }
 
-  var methods = {
+  methods = {
     behaviorTriggers: function(behaviorTriggers, behaviors) {
       var triggerBuilder = new BehaviorTriggersBuilder(this, behaviors);
       return triggerBuilder.buildBehaviorTriggers();

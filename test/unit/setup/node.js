@@ -11,13 +11,14 @@ global.expect = chai.expect;
 global.sinon = sinon;
 
 if (!global.document || !global.window) {
-  var jsdom = require('jsdom').jsdom;
-  global.document = jsdom('<html><head><script></script></head><body></body></html>', {
+  var JSDOM = require('jsdom').JSDOM;
+  var dom = new JSDOM('<html><head><script></script></head><body></body></html>', {
     FetchExternalResources   : ['script'],
     ProcessExternalResources : ['script'],
     MutationEvents           : '2.0',
     QuerySelector            : false
   });
+  global.document = dom.window.document;
 
   global.window = document.defaultView;
   global.navigator = global.window.navigator;
