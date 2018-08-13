@@ -13,26 +13,24 @@
 
 import _ from 'underscore';
 import normalizeMethods from './normalize-methods';
-import MarionetteError from '../error';
+import MarionetteError from '../utils/error';
 
-function iterateReplies(target, channel, bindings, actionName) {
-  // type-check bindings
+function normalizeBindings(context, bindings) {
   if (!_.isObject(bindings)) {
     throw new MarionetteError({
       message: 'Bindings must be an object.',
-      url: 'marionette.functions.html#marionettebindrequests'
+      url: 'common.html#bindrequests'
     });
   }
 
-  const normalizedRadioRequests = normalizeMethods.call(target, bindings);
-
-  channel[actionName](normalizedRadioRequests, target);
+  return normalizeMethods.call(context, bindings);
 }
 
 function bindRequests(channel, bindings) {
   if (!channel || !bindings) { return this; }
 
-  iterateReplies(this, channel, bindings, 'reply');
+  channel.reply(normalizeBindings(this, bindings), this);
+
   return this;
 }
 
@@ -44,7 +42,8 @@ function unbindRequests(channel, bindings) {
     return this;
   }
 
-  iterateReplies(this, channel, bindings, 'stopReplying');
+  channel.stopReplying(normalizeBindings(this, bindings));
+
   return this;
 }
 
